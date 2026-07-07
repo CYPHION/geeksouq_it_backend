@@ -1,13 +1,25 @@
+/**
+ * Global error handling middleware.
+ *
+ * `errorHandler` is registered last in index.js, so every error passed to
+ * `next(err)` — including ones thrown inside asyncHandler-wrapped handlers —
+ * ends up here and is turned into a consistent JSON response:
+ *   { code, message, stack? }   (stack only in development)
+ */
 const httpStatus = require('http-status');
 const config = require('../config/config');
 const ErrorResponse = require('../utils/errorResponse');
 const { Env } = require('../utils/constant');
 const { UniqueConstraintError, ValidationError, ForeignKeyConstraintError } = require('sequelize');
 
+// Sequelize error names that should map to 400 Bad Request instead of 500
 const sequelizeErrorNames = ["SequelizeValidationError", "SequelizeUniqueConstraintError"]
 
-// in place of SQL error instance SQL error should be replaced like the below mongoose error below
-// error instanceof mongoose.Error
+/**
+ * Normalizes unknown errors into an object with a `statusCode` before they
+ * reach errorHandler. Errors that are already ErrorResponse instances pass
+ * through unchanged. (Currently not registered in index.js.)
+ */
 const errorConverter = (err, req, res, next) => {
     let error = err;
     if (!(error instanceof ErrorResponse)) {
@@ -26,6 +38,15 @@ const errorConverter = (err, req, res, next) => {
     next(error);
 };
 
+/**
+ * Final error handler — converts any error into a JSON response.
+ *
+ * Sequelize errors get user-friendly messages (first validation message,
+ * "Duplicate entry found." for unique violations, dependency messages for
+ * FK violations); ErrorResponse instances keep their own message and status;
+ * anything else becomes a generic 500 "Internal Server Error".
+ * The stack trace is included only in development.
+ */
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
     let { message } = err;
@@ -65,6 +86,10 @@ const errorHandler = (err, req, res, next) => {
     res.status(statusCode).send(response);
 };
 
+/**
+ * Resolves the HTTP status code for an error: the error's own statusCode
+ * if set, 400 for known Sequelize validation errors, otherwise 500.
+ */
 const getSatusCode = (error) => {
     return error.statusCode || sequelizeErrorNames.includes(error.name) ? httpStatus.BAD_REQUEST : httpStatus.INTERNAL_SERVER_ERROR;
 }

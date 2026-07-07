@@ -1,8 +1,25 @@
+/**
+ * Contact form controller.
+ *
+ * HTTP request handlers for the /api/v1/form endpoints. Handlers stay thin:
+ * they read the request, delegate the data work to services/form.service.js,
+ * and shape the response. Every handler is wrapped in asyncHandler so thrown
+ * errors reach the global error handler middleware.
+ */
 const asyncHandler = require("../utils/asyncHandler");
 const { formServices } = require('../services');
 const { generateEmail } = require("../utils/email");
 
 // #region Form
+
+/**
+ * POST /api/v1/form/create
+ * Saves a form submission and emails a notification to the GeekSouq inbox.
+ * The email subject/layout depends on the submission kind:
+ * - `scheduleDate` present → "Schedule Selected"
+ * - `isChat` true          → plain "Message" from the site chat
+ * - otherwise              → "Package Selected"
+ */
 exports.createform = asyncHandler(async (req, res) => {
 
     const { name, email, phoneNo, message, scheduleDate, isChat } = req.body
@@ -54,6 +71,11 @@ exports.createform = asyncHandler(async (req, res) => {
     });
 })
 
+/**
+ * GET /api/v1/form/all
+ * Returns all form submissions. Query-string params are passed through
+ * as a Sequelize `where` filter (e.g. ?email=a@b.com).
+ */
 exports.getAllform = asyncHandler(async (req, res) => {
     const data = await formServices.getAllForm(req.query)
 
@@ -64,6 +86,11 @@ exports.getAllform = asyncHandler(async (req, res) => {
 });
 
 
+/**
+ * PUT /api/v1/form/update
+ * Updates an existing form. Expects the record `id` plus the changed
+ * fields in the request body. Responds 404 if the form doesn't exist.
+ */
 exports.updateform = asyncHandler(async (req, res, next) => {
     const data = await formServices.updateForm(req.body.id, req.body)
 
@@ -73,6 +100,10 @@ exports.updateform = asyncHandler(async (req, res, next) => {
     });
 })
 
+/**
+ * DELETE /api/v1/form/delete/:id
+ * Deletes a form by id. Responds 404 if the form doesn't exist.
+ */
 exports.deleteform = asyncHandler(async (req, res, next) => {
     const data = await formServices.deleteForm(req.params.id)
 

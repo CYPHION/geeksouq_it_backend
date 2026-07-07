@@ -1,7 +1,24 @@
+/**
+ * Email sending utility.
+ *
+ * Sends transactional emails (form notifications, newsletter welcome mails)
+ * over SMTP using the EMAIL_* settings from config.js.
+ */
 var nodemailer = require('nodemailer');
 const ErrorResponse = require('../utils/errorResponse');
 const { emailHost, emailPort, emailUsername, emailPassword } = require('../config/config');
 
+/**
+ * Sends an email via the configured SMTP account.
+ *
+ * @param {string|false} [email=false] - Recipient address; pass `false` to
+ *   send to the SMTP account itself (used for internal team notifications).
+ * @param {string} subject - Email subject line.
+ * @param {string} [text=""] - Plain-text fallback body.
+ * @param {string} html - HTML body.
+ * @returns {Promise<boolean>} always resolves true — send failures are
+ *   logged but never thrown, so an email outage can't fail the API request.
+ */
 exports.generateEmail = async (email = false, subject, text = "", html) => {
     try {
 

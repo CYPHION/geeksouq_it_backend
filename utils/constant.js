@@ -1,3 +1,11 @@
+/**
+ * Application constants.
+ *
+ * `Env` — the recognized NODE_ENV values, used for environment checks
+ *   (e.g. `config.env === Env.production`) instead of magic strings.
+ * `newsletterEmailContent` — HTML template of the welcome email sent to
+ *   new newsletter subscribers.
+ */
 const Constant = {
     Env: {
         development: "development",

@@ -11,6 +11,8 @@ This service exposes APIs for:
 - **Brief Forms** — collect project brief submissions and send email notifications via Nodemailer.
 - **File Uploads** — upload files (via Multer) and serve them back from the `uploads/` directory.
 
+All API endpoints are versioned under **`/api/v1`**. The service also exposes a backend info route (`/`), a health check (`/health`), and interactive Swagger docs (`/api-docs`, non-production only).
+
 Security is handled with `helmet` (secure HTTP headers), `xss-clean` (request sanitization), `cors`, and `express-rate-limit` (rate limiting on auth endpoints in production).
 
 ## Tech Stack
@@ -23,6 +25,7 @@ Security is handled with `helmet` (secure HTTP headers), `xss-clean` (request sa
 | Database        | PostgreSQL (via `pg` / `pg-hstore`) |
 | File Uploads    | Multer                              |
 | Emails          | Nodemailer                          |
+| API Docs        | Swagger UI (`swagger-jsdoc` + `swagger-ui-express`) |
 | Dev Server      | Nodemon                             |
 
 ## Requirements
@@ -40,17 +43,20 @@ SoftLogicAppBackend/
 ├── example.env                 # Template for required environment variables
 ├── config/
 │   ├── config.js               # Loads and exports environment variables
-│   └── db.js                   # Sequelize database connection
+│   ├── db.js                   # Sequelize database connection
+│   └── swagger.js              # Swagger/OpenAPI definition and schemas
 ├── routes/
-│   ├── index.js                # Root router — mounts all feature routes
-│   ├── form.routes.js          # /form endpoints
-│   ├── newsletter.routes.js    # /newsletter endpoints
-│   ├── briefForm.routes.js     # /brief-form endpoints
-│   └── upload.routes.js        # /upload endpoints
+│   ├── index.js                # API v1 router — mounts all feature routes
+│   ├── health.routes.js        # / (backend info) and /health endpoints
+│   ├── form.routes.js          # /api/v1/form endpoints
+│   ├── newsletter.routes.js    # /api/v1/newsletter endpoints
+│   ├── briefForm.routes.js     # /api/v1/brief-form endpoints
+│   └── upload.routes.js        # /api/v1/upload endpoints
 ├── controller/
 │   ├── form.controller.js      # Contact form request handlers
 │   ├── newsletter.controller.js# Newsletter request handlers
 │   ├── briefForm.controller.js # Brief form request handlers
+│   ├── health.controller.js    # Backend info and health check handlers
 │   └── file.controller.js      # File upload/download handlers
 ├── services/
 │   ├── index.js                # Service exports
@@ -152,42 +158,78 @@ Database synced successfully
 Listening to port 5000
 ```
 
+## API Documentation (Swagger)
+
+Interactive API docs (Swagger UI) are available in **development/test only**:
+
+```
+http://localhost:5000/api-docs
+```
+
+The docs are generated from JSDoc `@swagger` annotations in `routes/*.js` — see `config/swagger.js` for the base OpenAPI definition and reusable schemas.
+
+> **Note:** The Swagger route is only mounted when `NODE_ENV` is not `production`. In production, `/api-docs` returns `404`.
+
 ## API Endpoints
 
-Base URL: `http://localhost:5000`
+Base URL: `http://localhost:5000` — all feature endpoints are versioned under `/api/v1`.
 
-### Contact Form — `/form`
+### System Routes (unversioned)
 
-| Method | Endpoint            | Description                  |
-| ------ | ------------------- | ---------------------------- |
-| GET    | `/form/all`         | Get all form submissions     |
-| POST   | `/form/create`      | Create a form submission     |
-| PUT    | `/form/update`      | Update a form submission     |
-| DELETE | `/form/delete/:id`  | Delete a form submission     |
+| Method | Endpoint     | Description                                              |
+| ------ | ------------ | -------------------------------------------------------- |
+| GET    | `/`          | Backend info (name, version, environment, useful links)  |
+| GET    | `/health`    | Server and database health check                         |
+| GET    | `/api-docs`  | Swagger UI (development/test only)                       |
 
-### Newsletter — `/newsletter`
+#### Health Check — `GET /health`
 
-| Method | Endpoint                  | Description                 |
-| ------ | ------------------------- | --------------------------- |
-| GET    | `/newsletter/all`         | Get all subscriptions       |
-| POST   | `/newsletter/create`      | Create a subscription       |
-| PUT    | `/newsletter/update`      | Update a subscription       |
-| DELETE | `/newsletter/delete/:id`  | Delete a subscription       |
+Reports server and database status — suitable for load balancer / uptime monitor probes:
 
-### Brief Form — `/brief-form`
+```json
+{
+  "status": "ok",
+  "server": "up",
+  "database": "up",
+  "uptime": 123.45,
+  "timestamp": "2026-07-07T12:00:00.000Z"
+}
+```
 
-| Method | Endpoint                  | Description                        |
-| ------ | ------------------------- | ---------------------------------- |
-| GET    | `/brief-form/all`         | Get all brief form submissions     |
-| POST   | `/brief-form/create`      | Create a brief form submission     |
-| DELETE | `/brief-form/delete/:id`  | Delete a brief form submission     |
+Returns HTTP `200` when healthy, or `503` with `"status": "degraded"` when the database is unreachable.
 
-### File Upload — `/upload`
+### Contact Form — `/api/v1/form`
 
-| Method | Endpoint          | Description                                   |
-| ------ | ----------------- | --------------------------------------------- |
-| POST   | `/upload/single`  | Upload a single file (form field: `file`)     |
-| GET    | `/upload/:name`   | Retrieve an uploaded file by name             |
+| Method | Endpoint                   | Description                  |
+| ------ | -------------------------- | ---------------------------- |
+| GET    | `/api/v1/form/all`         | Get all form submissions     |
+| POST   | `/api/v1/form/create`      | Create a form submission     |
+| PUT    | `/api/v1/form/update`      | Update a form submission     |
+| DELETE | `/api/v1/form/delete/:id`  | Delete a form submission     |
+
+### Newsletter — `/api/v1/newsletter`
+
+| Method | Endpoint                         | Description                 |
+| ------ | -------------------------------- | --------------------------- |
+| GET    | `/api/v1/newsletter/all`         | Get all subscriptions       |
+| POST   | `/api/v1/newsletter/create`      | Create a subscription       |
+| PUT    | `/api/v1/newsletter/update`      | Update a subscription       |
+| DELETE | `/api/v1/newsletter/delete/:id`  | Delete a subscription       |
+
+### Brief Form — `/api/v1/brief-form`
+
+| Method | Endpoint                         | Description                        |
+| ------ | -------------------------------- | ---------------------------------- |
+| GET    | `/api/v1/brief-form/all`         | Get all brief form submissions     |
+| POST   | `/api/v1/brief-form/create`      | Create a brief form submission     |
+| DELETE | `/api/v1/brief-form/delete/:id`  | Delete a brief form submission     |
+
+### File Upload — `/api/v1/upload`
+
+| Method | Endpoint                 | Description                                   |
+| ------ | ------------------------ | --------------------------------------------- |
+| POST   | `/api/v1/upload/single`  | Upload a single file (form field: `file`)     |
+| GET    | `/api/v1/upload/:name`   | Retrieve an uploaded file by name             |
 
 Uploaded files are also served statically at `/uploads/<filename>`.
 

@@ -1,13 +1,33 @@
+/**
+ * Brief form service.
+ *
+ * Business logic and database access for project brief submissions.
+ * Creating a brief form also emails the GeekSouq team a notification with
+ * links to the files the user uploaded.
+ */
 const BriefForm = require('../model/briefForm.model');
 const config = require('../config/config');
 const { generateEmail } = require('../utils/email');
 
+/**
+ * Returns all brief form submissions.
+ * @returns {Promise<BriefForm[]>}
+ */
 exports.getForms = async () => {
     return await BriefForm.findAll()
 }
 
 
 
+/**
+ * Creates a brief form record, then emails the team a notification
+ * containing the submitter's details and links (built from config.urlEmail)
+ * to the uploaded form/user images.
+ * @param {object} data - Brief form fields (type, username, email, formData,
+ *   formImage, userImage). `formData` is stored as JSON text by the model.
+ * @returns {Promise<BriefForm|undefined>} the created record, or undefined
+ *   if creation failed (the error is logged, not rethrown).
+ */
 exports.createForm = async (data) => {
     try {
         // Create the form
@@ -96,6 +116,11 @@ exports.createForm = async (data) => {
 
 };
 
+/**
+ * Deletes a brief form submission by id.
+ * @param {number} id
+ * @returns {Promise<BriefForm>} the destroyed record
+ */
 exports.deleteForms = async (id) => {
     const form = await BriefForm.findByPk(id)
     return await form.destroy()

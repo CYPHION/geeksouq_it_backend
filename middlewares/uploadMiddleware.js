@@ -1,21 +1,26 @@
-// Import multer module for file handling
+/**
+ * File upload middleware (multer).
+ *
+ * Configures how multipart/form-data uploads are stored: files go straight
+ * to disk in the uploads/ directory, renamed to a timestamp so names never
+ * collide. Used by routes/upload.routes.js as `upload.single('file')`.
+ */
 const multer = require("multer");
 
-// Disk storage configuration for saving files directly to server storage
+// disk storage configuration for saving files directly to server storage
 var storage = multer.diskStorage({
-    // Function to specify the destination where the file should be stored
+    // store every upload in the 'uploads' folder (also served statically at /uploads)
     destination: function (req, file, cb) {
-        // Set the destination to 'uploads' folder
         cb(null, 'uploads');
     },
-    // Function to specify the naming convention of the uploaded files
+    // rename the file to the current timestamp, keeping the original extension,
+    // e.g. "photo.png" → "1720350000000.png" — this name is returned to the client
     filename: function (req, file, cb) {
-        // Create the file name with a timestamp and preserve the original file extension
         cb(null, Date.now() + '.' + file.originalname.split('.')[1]);
     }
 });
 
-// Set up multer with disk storage and a file size limit
+// multer instance with disk storage and a ~100 MB size limit
 exports.upload = multer({
     storage: storage,
     limits: 100000000
