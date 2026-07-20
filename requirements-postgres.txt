@@ -1,0 +1,12 @@
+# Optional: install with `pip install -r requirements-postgres.txt` instead
+# of requirements.txt if you're using DB_DIALECT=postgres. Kept separate so a
+# psycopg2-binary build failure (it only ships prebuilt wheels for specific
+# Python-version/OS combos) can never block installing the app's core
+# dependencies — see the note at the bottom of requirements.txt.
+-r requirements.txt
+
+# 2.9.10+ ships prebuilt wheels for Python 3.13; 2.9.9 does not, and fails
+# to compile from source on Windows against Python 3.13's ABI (missing
+# _PyInterpreterState_Get at link time). If this still fails to install on
+# your platform, try the newer `psycopg[binary]` package (psycopg3) instead.
+psycopg2-binary==2.9.10

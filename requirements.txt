@@ -1,0 +1,26 @@
+Flask==3.0.3
+Flask-SQLAlchemy==3.1.1
+Flask-Cors==4.0.1
+Flask-Limiter==3.8.0
+flasgger==0.9.7.1
+python-dotenv==1.0.1
+SQLAlchemy==2.0.32
+bleach==6.1.0
+
+# MySQL driver — pure Python, no compiler needed; the common case on shared
+# hosting (cPanel MySQL databases) and the default DB_DIALECT.
+PyMySQL==1.1.1
+
+# WSGI server for hosts that run the app via gunicorn/uWSGI instead of
+# Passenger (see wsgi.py). Not needed for cPanel "Setup Python App" hosting,
+# which uses Passenger + passenger_wsgi.py instead.
+gunicorn==22.0.0
+
+# PostgreSQL support (DB_DIALECT=postgres) is optional and deliberately NOT
+# listed here — see requirements-postgres.txt. psycopg2-binary only ships
+# prebuilt wheels for specific Python-version/OS combinations; when pip has
+# to compile it from source (no matching wheel, e.g. a brand-new Python
+# release) it can fail loudly and, critically, abort the ENTIRE `pip
+# install -r requirements.txt` command — nothing in this file gets
+# installed either, not just the Postgres driver. Keeping it out of the
+# core file means Flask/SQLAlchemy/etc. always install cleanly regardless.

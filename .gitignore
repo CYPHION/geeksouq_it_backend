@@ -1,7 +1,19 @@
-node_modules
 .vscode
-package-lock.json
 *.zip
 .env
 .env.*
-uploads
+
+# uploaded files — keep the directory tracked, not its contents
+uploads/*
+!uploads/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+instance/
+*.db
+.pytest_cache/
